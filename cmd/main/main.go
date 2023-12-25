@@ -47,13 +47,13 @@ func populateMovies(path string) (data []uint8) {
 	return
 }
 func populateTxt(path string, movies []Movie){
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
 	}
 	defer file.Close()
-	_, err = file.Write([]byte(jsonData(movies)))
+	_, err = file.Write(([]byte(jsonData(movies))))
 	if err != nil {
 		fmt.Println("Error writing to file:", err)
 		return
@@ -80,34 +80,35 @@ func keyGen(params map[string]string) (key int) {
 	key -= 1
 	return key
 }
-
+var movies []Movie
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello there, General Kenobi")
 }
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
-	movies := structData(populateMovies("movies.txt"))
-	for _, movie := range movies {
-		fmt.Fprintf(w, "%s\n\n", jsonData(movie))
-	}
-	populateTxt("moviesExp.txt", movies)
+	movies = structData(populateMovies("movies.txt"))
+	fmt.Fprintf(w, "%s\n\n", jsonData(movies))
 }
 
 func getMovie(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	key := keyGen(params)
-	movies := structData(populateMovies("movies.txt"))
 	fmt.Fprintf(w, "%s", jsonData(movies[key]))
 }
 
 func addMovie(w http.ResponseWriter, r *http.Request) {
-	movies := structData(populateMovies("movies.txt"))
 	w.Header().Set("Content-type", "application/json")
-	var Mov Movie
-	_ = json.NewDecoder(r.Body).Decode(&Mov)
-	Mov.ID = rand.Intn(1000000)
-	movies = append(movies, Mov)
-	populateTxt("moviesExp.txt", movies)
-	json.NewEncoder(w).Encode(Mov)
+	var mov Movie
+	_ = json.NewDecoder(r.Body).Decode(&mov)
+	mov.ID = rand.Intn(1000000)
+	movies = append(movies, mov)
+	populateTxt("movies.txt", movies)
+	json.NewEncoder(w).Encode(mov)
+}
+func deleteMovie(w http.ResponseWriter, r *http.Request){
+	params := mux.Vars(r)
+	key := keyGen(params)
+	movies = append(movies[:key], movies[key+1:]...)
+	populateTxt("movies.txt", movies)
 }
 func main() {
 	r := mux.NewRouter()
@@ -116,13 +117,13 @@ func main() {
 	})
 	r.HandleFunc("/hello", helloHandler)
 	r.HandleFunc("/movies", getAllMovies)
-	r.HandleFunc("/movies", addMovie)
+	r.HandleFunc("/addmovies", addMovie)
 	r.HandleFunc("/movies/{ID}", getMovie)
 	// r.HandleFunc("/movies/{ID}", updateMovie)
-	// r.HandleFunc("/movies/{ID}", deleteMovie)
+	r.HandleFunc("/movies/{ID}", deleteMovie)
 	http.Handle("/", r)
-	fmt.Println("Starting server at port 8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	fmt.Println("Starting server at port 3000")
+	if err := http.ListenAndServe(":3000", nil); err != nil {
 		log.Fatal(err)
 	}
 }
