@@ -1,4 +1,4 @@
-module nyan/crud-api
+module nyan/api-crud
 
 go 1.21.5
 
