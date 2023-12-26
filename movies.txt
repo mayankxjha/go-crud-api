@@ -268,14 +268,5 @@
       "Fname": "David",
       "Lname": "Fincher"
     }
-  },
-  {
-    "ID": 157614,
-    "Title": "In",
-    "ISBN": "978-",
-    "Director": {
-      "Fname": "Chrier",
-      "Lname": "Nan"
-    }
   }
 ]

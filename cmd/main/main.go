@@ -77,7 +77,6 @@ func jsonData(data interface{}) (jsonString string) {
 }
 func keyGen(params map[string]string) (key int) {
 	key, _ = strconv.Atoi(params["ID"])
-	key -= 1
 	return key
 }
 var movies []Movie
@@ -92,7 +91,16 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 func getMovie(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	key := keyGen(params)
-	fmt.Fprintf(w, "%s", jsonData(movies[key]))
+	del := false
+	for it,movie := range(movies){
+		if movie.ID == key{
+			fmt.Fprintf(w, "%s", jsonData(movies[it]))
+		}
+		del = true
+	}
+	if(!del){
+		fmt.Fprintf(w, "Movie not found")
+	}
 }
 
 func addMovie(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +115,17 @@ func addMovie(w http.ResponseWriter, r *http.Request) {
 func deleteMovie(w http.ResponseWriter, r *http.Request){
 	params := mux.Vars(r)
 	key := keyGen(params)
-	movies = append(movies[:key], movies[key+1:]...)
+	del := false
+	for it, movie := range(movies){
+		if movie.ID==key{
+			fmt.Fprintf(w, "Movie Deleted")
+			movies = append(movies[:it], movies[it+1:]...)
+			del = true
+		}
+	}
+	if(!del){
+		fmt.Fprintf(w, "Movie not dound")
+	}
 	populateTxt("movies.txt", movies)
 }
 func main() {
@@ -120,7 +138,7 @@ func main() {
 	r.HandleFunc("/addmovies", addMovie)
 	r.HandleFunc("/movies/{ID}", getMovie)
 	// r.HandleFunc("/movies/{ID}", updateMovie)
-	r.HandleFunc("/movies/{ID}", deleteMovie)
+	r.HandleFunc("/delmovies/{ID}", deleteMovie)
 	http.Handle("/", r)
 	fmt.Println("Starting server at port 3000")
 	if err := http.ListenAndServe(":3000", nil); err != nil {
